@@ -8,11 +8,11 @@
 #define CV_REPLACEMENT_H
 
 //AFAIK includes should not be in header files, will move.
-#include <stdio.h>
+//#include <stdio.h>
 #include <vector>
 
 /////void cvtColor();
-void GaussianBlur();
+///Image GaussianBlur();
 double threshold();
 //Mat getStructuringElement();
 void morphologyEx();
@@ -45,6 +45,8 @@ class Image
 {
     public:
     Image();
+    Image(char* filepath);
+    Image(int width, int height, int channels);
     ~Image();
     //make the image grayscale. Destructive.
     void cvtColor();
@@ -56,6 +58,10 @@ class Image
 
     //From a vector of coordinates returns a rectangle encompasing all of the points.
     Rect BoundingRect(std::vector<Coordinate> CoordinateVector);
+
+    //Performs a hardcoded GaussianBlur on this image (assuming grayscale) and returns a new blurred image
+    //Currently implemented as a for loop, without utilizing the board's convolution, cuts off 3 pixels from each edge
+    Image GaussianBlur();
 
 
 
@@ -69,9 +75,7 @@ class Image
     unsigned int imageHeight;
     unsigned int numChannels;
 
-    int* red[100][100];
-    int* green[100][100];
-    int* blue[100][100];
+    unsigned char *** imageArray;
 
 };
 

@@ -12,22 +12,24 @@
 #include <iostream>
 #include <time.h> //For seeding the random generator for testing
 #include <string>
-
-#include "jpeglib.h" //Note: Installed with: sudo apt-get install libjpeg-dev
-#include <setjmp.h>
+#include <fstream>
 //#include <stdio.h>
 
 
 void TestBoundingRect();
 void TestImageConstructor();
-void put_scanline_someplace(JSAMPARRAY buffer[0],int row_stride);
+void TestingBitmap();
+void TestingImageConstructor(char* filepath);
+
 
 int main(){
 
     //test();
     //TestBoundingRect();
-    TestImageConstructor();
-    
+    //TestImageConstructor();
+    //TestingBitmap();
+
+
     return 0;
 }
 
@@ -84,92 +86,48 @@ void TestImageConstructor(){
 
 }
 
+//The purpose of this function is to test what happens when I read a bitmap image
+void TestingBitmap(){
 
+    FILE* imageFile = fopen("./SampleImages/1.bmp","rb");
 
+    if(imageFile == NULL)
+        std::cout << "File opening error" << std::endl;
 
-struct my_error_mgr{
-    struct jpeg_error_mgr pub;
-    jmp_buf setjmp_buffer;
-};
+    unsigned char info[54];
+    fread(info, sizeof(unsigned char), 54 , imageFile);
+    
+    //Extract information from the header
+    int width = *(int*)&info[18];
+    int height = *(int*)&info[22];
 
-typedef struct my_error_mgr * my_error_ptr;
+    std::cout << std::endl;
+    std::cout << " Width: " << width << std::endl;
+    std::cout << "Height: " << height << std::endl;
 
-METHODDEF(void)
-my_error_exit (j_common_ptr cinfo){
-    my_error_ptr myerr = (my_error_ptr) cinfo -> err;
-    (*cinfo->err->output_message)(cinfo);
-    longjmp(myerr->setjmp_buffer,1);
+    int row_padded = (width*3+3)&(~3);
+    unsigned char* data = new unsigned char[row_padded];
+    unsigned char tmp;
+
+    for(int i = 0; i < height; i++)
+    {
+        fread(data,sizeof(unsigned char), row_padded, imageFile);
+        for(int j = 0; j < width *3; j += 3){
+            //convert BGR to RGB
+            tmp = data[j];
+            data[j] = data[j+2];
+            data[j+2] = tmp;
+
+            std::cout << "R: "<< (int)data[j] << " G: " << (int)data[j+1]<< " B: " << (int)data[j+2]<< std::endl;
+
+        }
+    }
+
+    fclose(imageFile);
+    return;
 }
 
-
-//Function made by following the second half of: https://github.com/LuaDist/libjpeg/blob/master/example.c
-void ReadJPEGFile(char * filename){
-
-    struct jpeg_decompress_struct cinfo;
-    struct my_error_mgr jerr;
-
-    FILE * infile;      //Source File
-    JSAMPARRAY buffer;  //Output row buffer
-    int row_stride;     //physical row width in output buffer
-
-    if((infile = fopen(filename, "rb")) == NULL){ //Note this should be "b" if we need a binary file
-        fprintf(stderr, "can't open %s\n", filename);
-        return;
-    }
-
-    //Step 1: Allocate and initialize JPEG decompression object
-
-    cinfo.err = jpeg_std_error(&jerr.pub);
-    jerr.pub.error_exit = my_error_exit;
-
-    //Check if we need to exit due to error.
-    if(setjmp(jerr.setjmp_buffer)){
-        jpeg_destroy_decompress(&cinfo);
-        fclose(infile);
-        return;
-    }
-
-    //Initialize the JPEG decompression object
-    jpeg_create_decompress(&cinfo);
-
-    //Step 2: Specify data source
-    jpeg_stdio_src(&cinfo,infile);
-
-    //Step3: read file parameters with jpeg_read_header
-    (void) jpeg_read_header(&cinfo,TRUE);
-
-    //Step 4: Set parameters for decompression
-    //Not necessary
-
-    //Step 5: Decompress
-
-    (void) jpeg_start_decompress(&cinfo);
-
-    //JSAMPLEs per row in output buffer
-    row_stride = cinfo.output_width * cinfo.output_components;
-    //Make a one-row-high sample array that will go away when done with the image
-    buffer = (*cinfo.mem->alloc_sarray)((j_common_ptr) &cinfo, JPOOL_IMAGE, row_stride,1);
-
-    //Step 6: While there are scan lines, read them
-
-    while(cinfo.output_scanline < cinfo.output_height){
-        (void) jpeg_read_scanlines(&cinfo,buffer,1);
-
-        put_scanline_someplace(buffer[0], row_stride);
-    }
-
-    //Step 7: Finish decompression
-    (void) jpeg_finish_decompress(&cinfo);
-
-    jpeg_destroy_decompress(&cinfo);
-
-    fclose(infile);
-
-    return;
-
-}
-
-void put_scanline_someplace(JSAMPARRAY buffer[0],int row_stride){
-
-    return;
+void TestingImageConstructor(char* filepath){
+    Image* ImageTest = new Image(filepath);
+    //ImageTest.printBinary;
 }
