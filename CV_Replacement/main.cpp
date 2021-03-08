@@ -19,15 +19,18 @@
 void TestBoundingRect();
 void TestImageConstructor();
 void TestingBitmap();
-void TestingImageConstructor(char* filepath);
+Image TestingImageConstructor(char* filepath);
+Image TestImgCVT(char* filepath);
 
 
 int main(){
 
+    char* filepath = "./SampleImages/1.bmp";
     //test();
     //TestBoundingRect();
-    //TestImageConstructor();
     //TestingBitmap();
+    //TestingImageConstructor(filepath);
+    TestImgCVT(filepath);
 
 
     return 0;
@@ -67,8 +70,6 @@ void TestBoundingRect(){
     return;
 }
 
-
-
 void TestImageConstructor(){
 
     std::string readingpath = "../SampleImages/";
@@ -76,11 +77,6 @@ void TestImageConstructor(){
     std::string fullInputPath = readingpath + filename;
     std::string writingpath = "../OutputImages/";
     std::string fullOutputPath = writingpath + filename;
-
-
-
-
-
 
     //char filepath[100] = "../SampleImages/2.jpg";
 
@@ -127,7 +123,19 @@ void TestingBitmap(){
     return;
 }
 
-void TestingImageConstructor(char* filepath){
+Image TestingImageConstructor(char* filepath){
+    std::cout << "Reached TestingImageConstructor Function" << std::endl;
     Image* ImageTest = new Image(filepath);
     //ImageTest.printBinary;
+
+    std::cout << "Returned from ImageConstructor " << std::endl;
+    return *ImageTest;
+}
+
+Image TestImgCVT(char* filepath){
+
+    Image Image1 = TestingImageConstructor(filepath);
+    Image1.cvtColor();
+    return(Image1);
+
 }

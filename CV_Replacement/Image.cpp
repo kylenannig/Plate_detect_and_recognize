@@ -25,34 +25,41 @@ Image::Image(char* filepath){
     int width = *(int*)&info[18];
     int height = *(int*)&info[22];
 
-    std::cout << std::endl;
-    std::cout << " Width: " << width << std::endl;
-    std::cout << "Height: " << height << std::endl;
+    //std::cout << std::endl;
+    //std::cout << " Width: " << width << std::endl;
+    //std::cout << "Height: " << height << std::endl;
 
     int row_padded = (width*3+3)&(~3);
+
+    std::cout << "Row Padded: " << row_padded << std::endl;
+
     unsigned char* data = new unsigned char[row_padded];
     unsigned char tmp;
 
     //Allocate the memory for the image
-    this->imageArray = (unsigned char***) malloc(width);
+    this->imageArray = (unsigned char***) malloc(width*sizeof(unsigned char**));
     for(int i = 0; i < width; i++){
-        this->imageArray[i] = (unsigned char **) malloc(height);
+        this->imageArray[i] = (unsigned char **) malloc(height*sizeof(unsigned char*));
         for(int j = 0; j < height; j++){
-            this-> imageArray[i][j] = (unsigned char *) malloc(3);//assumed depth
+            this-> imageArray[i][j] = (unsigned char *) malloc(3*sizeof(unsigned char));//assumed depth
         }
     }
 
+    //std::cout << this->imageArray[27][2][4] << std::endl;
+//*
     //With the memory allocated, we fill it.
-    for(int i = 0; i < height; i++){
+    for(int i = 0; i < width; i++){
         fread(data,sizeof(unsigned char), row_padded,imageFile);
-        for(int j = 0; j < width * 3; j += 3){
+        for(int j = 0; j < height; j++){
             //Converting BGR to RGB, will have to confirm if this is necessary later
-            imageArray[j][i][3] = data[j];
-            imageArray[j][i][2] = data[j+1];
-            imageArray[j][i][1] = data[j+2];
+            imageArray[i][j][0] = data[j*3+2];
+            imageArray[i][j][1] = data[j*3+1];
+            imageArray[i][j][2] = data[j*3];
+            std::cout << "RGB: " << (int)data[j*3+2] << " " << (int)data[j*3+1] << " " << (int)data[j*3] << std::endl;
+            //std::cout << this->imageArray[i][j][0];
         }
     }
-
+//*/
     //Print out the data in a similar fashion.
     /*
     for(int i = 0; i < height; i++)
@@ -85,9 +92,67 @@ Image::~Image(){
 
 }
 
-
+//Make the image grayscale. Will have to make a new bit of memory and free the previous array.
+//0.299R, 0.587G,0.114B
 void Image::cvtColor(){
+    int height = this->imageHeight;
+    int width = this->imageWidth;
+    
+    std::cout << "RGBValues: " << (int)this->imageArray[0][0][0] << std::endl;
+    std::cout << "Height: " << height << "| Width: " << width << std::endl;
 
+
+
+    unsigned char ** grayArray = (unsigned char**) malloc(width*sizeof(unsigned char*));
+    for(int i = 0; i < width; i++){
+        grayArray[i] = (unsigned char *) malloc(height*sizeof(unsigned char));
+    }
+
+
+
+    for(int i = 0; i < width; i++){
+        for(int j = 0; j < height; j++){
+            int red = (int) this->imageArray[i][j][0];
+            int green = (int) this ->imageArray[i][j][1];
+            int blue = (int) this ->imageArray[i][j][2];
+            //std::cout << "Red: " << (int) red << " | Shifted: " << red*0.299 << std::endl;
+            int grayness = (red*0.299 + green*0.587 + blue*0.114);
+            std::cout << "Grayness: " << grayness << std::endl;
+            grayArray[i][j] = grayness;
+        }
+    }
+    //*
+    int threshold = 100;
+    std::cout << "----------------------------" << std::endl;
+    for(int i = 0; i < width; i++){
+        for(int j = 0; j < height; j++){
+            
+            if(grayArray[j][i] > 200){
+                std::cout << "4";
+            }
+            else if(grayArray[j][i] > 150){
+                std::cout << "3";
+            }
+            else if(grayArray[j][i] > 100){
+                std::cout << "2";
+            }
+            else if(grayArray[j][i] > 50){
+                std::cout << "1";
+            }
+            else if(grayArray[j][i] > 10){
+                std::cout << "0";
+            }
+            else{
+                std::cout << " ";
+            }
+
+
+        }
+
+        std::cout << std::endl;
+    }
+    std::cout << "----------------------------" << std::endl;
+    //*/
 }
 
 //Draws a box over the image using the rectangle as the bounds. Destructive.
